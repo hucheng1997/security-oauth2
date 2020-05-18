@@ -1,6 +1,10 @@
 server:
   port: 3001
+  servlet:
+    context-path: /uua
 spring:
+  application:
+    name: uaa‐service
   datasource:
     username: root
     password: 1234

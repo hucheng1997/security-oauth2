@@ -1,2 +1,7 @@
 server:
   port: 4001
+  servlet:
+    context-path: /resource
+spring:
+  application:
+    name: resource-service

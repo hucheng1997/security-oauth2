@@ -12,6 +12,8 @@
         <module>base-resource</module>
         <module>jwt-uua</module>
         <module>jwt-resource</module>
+        <module>cloud-eureka</module>
+        <module>cloud-zuul</module>
     </modules>
     <packaging>pom</packaging>
     <properties>
