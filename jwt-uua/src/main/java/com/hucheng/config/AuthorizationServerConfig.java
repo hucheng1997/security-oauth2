@@ -1,23 +1,29 @@
 package com.hucheng.config;
 
+import ch.qos.logback.core.net.server.Client;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.security.oauth2.provider.client.JdbcClientDetailsService;
+import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
+import org.springframework.security.oauth2.provider.code.JdbcAuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
+import javax.sql.DataSource;
 import java.util.Arrays;
 
 /**
@@ -35,24 +41,22 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     //密码模式才需要配置,认证管理器
     @Autowired
     private AuthenticationManager authenticationManager;
-
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtAccessTokenConverter tokenConverter;
+
+    @Autowired
+    DataSource dataSource;
 
     /**
      * 配置客户端
      */
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        clients.inMemory()//使用in-memory存储
-                .withClient("c1")//client-id
-                .secret(new BCryptPasswordEncoder().encode("123"))
-                .resourceIds("res1")
-                .authorizedGrantTypes("authorization_code",
-                        "password", "client_credentials", "implicit", "refresh_token")//该client允许的授权类型
-                .scopes("all")//允许授权的范围
-                .autoApprove(false)//这个是设置要不要弹出确认授权页面的
-                .redirectUris("http://www.baidu.com");//回调的地址
+        JdbcClientDetailsService clientDetailsService = new JdbcClientDetailsService(dataSource);
+        clientDetailsService.setPasswordEncoder(passwordEncoder);
+        clients.withClientDetails(clientDetailsService);
     }
 
     /**
@@ -80,7 +84,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints.authenticationManager(authenticationManager)//认证管理器
-                .authorizationCodeServices(new InMemoryAuthorizationCodeServices())//授权码管理
+                .authorizationCodeServices(new JdbcAuthorizationCodeServices(dataSource))//授权码管理
                 .tokenServices(tokenServices())//token管理
                 .allowedTokenEndpointRequestMethods(HttpMethod.POST);
     }

@@ -1,2 +1,8 @@
 server:
   port: 3001
+spring:
+  datasource:
+    username: root
+    password: 1234
+    url: jdbc:mysql://192.168.182.200:3306/user_db?useSSL=false
+    driver-class-name: com.mysql.jdbc.Driver
